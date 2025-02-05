@@ -1,14 +1,16 @@
+import sys, os
 import requests
 import json
-from datetime import datetime
+from datetime import timedelta, date
 import redis
 
-def add_future_weather(user_date: datetime, missing_dates: list[(int, str)], r: redis) -> None:
+def add_future_weather(from_date: date, missing_dates: list[(int, str)], r: redis) -> None:
     '''
     API provided by data.gov.sg
     Calls API and adds forecast for dates that are not in redis into redis.
+    Sets expiry to one day later
     '''
-    url = "https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook?date=" + user_date.strftime("%Y-%m-%d") # Get the 4-day forecast
+    url = "https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook?date=" + from_date.strftime("%Y-%m-%d") # Get the 4-day forecast from the specified day
     response = requests.get(url)
     forecast = json.loads(json.dumps(response.json()["data"]["records"][0])) # index 0 is the most recent forecast
     forecast = forecast["forecasts"]
@@ -18,9 +20,9 @@ def add_future_weather(user_date: datetime, missing_dates: list[(int, str)], r: 
             forecast_i = forecast[i]
 
             weather = forecast_i["forecast"]["text"]
-            temp = [forecast_i["temperature"]["low"], forecast_i["temperature"]["high"]]
-            humidity = [forecast_i["relativeHumidity"]["low"], forecast_i["relativeHumidity"]["high"]]
-            windSpeed = [forecast_i["wind"]["speed"]["low"], forecast_i["wind"]["speed"]["high"]]
+            temp = str([forecast_i["temperature"]["low"], forecast_i["temperature"]["high"]])
+            humidity = str([forecast_i["relativeHumidity"]["low"], forecast_i["relativeHumidity"]["high"]])
+            windSpeed = str([forecast_i["wind"]["speed"]["low"], forecast_i["wind"]["speed"]["high"]])
             windDirection = forecast_i["wind"]["direction"]
 
             '''
@@ -38,15 +40,17 @@ def add_future_weather(user_date: datetime, missing_dates: list[(int, str)], r: 
                     "windDirection": windDirection
                 }
             )
-
+            r.expire(date_str, timedelta(days=1)) # remove forecast after 1 day
+    except Exception as e:
+        fname = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
+        print("script name: ", fname, ", line number: ", sys.exc_info()[2].tb_lineno, sep="")
+        print(e)
+    else:
         print("missing forecast dates:", [date for i, date in missing_dates])
         print("Added into redis successfully")
-    except Exception as e:
-        print(e)
-
 
 def add_historical_weather(missing_dates: list[str], r: redis) -> None:
-    url = "https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast"
+    url = "https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast?date=" # Uses 24h forecast API to get historical data.
 
     try:
         for date_str in missing_dates:
@@ -55,9 +59,9 @@ def add_historical_weather(missing_dates: list[str], r: redis) -> None:
             forecast = forecast["general"]
 
             weather = forecast["forecast"]["text"]
-            temp = [forecast["temperature"]["low"], forecast["temperature"]["high"]]
-            humidity = [forecast["relativeHumidity"]["low"], forecast["relativeHumidity"]["high"]]
-            windSpeed = [forecast["wind"]["speed"]["low"], forecast["wind"]["speed"]["high"]]
+            temp = str([forecast["temperature"]["low"], forecast["temperature"]["high"]]) # Must be stored as string in redis hash
+            humidity = str([forecast["relativeHumidity"]["low"], forecast["relativeHumidity"]["high"]])
+            windSpeed = str([forecast["wind"]["speed"]["low"], forecast["wind"]["speed"]["high"]])
             windDirection = forecast["wind"]["direction"]
 
             '''
@@ -75,9 +79,11 @@ def add_historical_weather(missing_dates: list[str], r: redis) -> None:
                     "windDirection": windDirection
                 }
             )
-
+    except Exception as e:
+        fname = os.path.split(sys.exc_info()[2].tb_frame.f_code.co_filename)[1]
+        print("script name: ", fname, ", line number: ", sys.exc_info()[2].tb_lineno, sep="")
+        print(e)
+    else:
         print("missing historical dates:", missing_dates)
         print("Added into redis successfully")
-    except Exception as e:
-        print(e)
 

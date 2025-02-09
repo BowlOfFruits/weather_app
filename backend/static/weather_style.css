@@ -1,0 +1,40 @@
+body {
+    background-color: azure;
+}
+
+table {
+    background-color: white;
+    border-style: solid;
+    border-color: white;
+    border-radius: 15px;
+}
+
+
+td {
+    width: 100px;
+    height: 50px;
+}
+
+.table_center {
+    margin-left: auto;
+    margin-right: auto
+}
+
+.date {
+    border-bottom-style: solid;
+    border-bottom-color: lightgrey;
+    border-bottom-width: 1px;
+}
+
+.field {
+    text-align: left;
+    padding-left: 50px;
+}
+
+.measurement {
+    text-align: right;
+}
+
+.nested {
+    text-align: center;
+}

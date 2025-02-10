@@ -17,7 +17,7 @@ td {
 
 .table_center {
     margin-left: auto;
-    margin-right: auto
+    margin-right: auto;
 }
 
 .date {
@@ -37,4 +37,23 @@ td {
 
 .nested {
     text-align: center;
+}
+
+#calendar {
+    background-color: white;
+    border: none;
+    padding: 5px 5px;
+    font-size: 15px;
+    transition-duration: 0.4s;
+    position: relative;
+    cursor: pointer;
+}
+
+#calendar:hover {
+    background-color: lightblue;
+    border-radius: 5px;
+}
+
+#date {
+    display: none;
 }

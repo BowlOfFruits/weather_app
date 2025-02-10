@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="../static/weather_style.css">
+    <script src="https://kit.fontawesome.com/71ab039138.js" crossorigin="anonymous"></script>
+    <title>Weather Dashboard</title>
+</head>
+<body>
+
+<table class="table_center">
+    <tr>
+        <td colspan="3" class="date">
+            2025-02-06
+            <button type="button" id="calendar">
+                <i class="fa-regular fa-calendar"></i>
+            </button>
+            <input type="date" id="date"/>
+
+
+            <!-- JS for the calendar button -->
+            <script>
+                document.getElementById("calendar").addEventListener("click", function() {
+                    document.getElementById("date").showPicker();
+                })
+
+                <!--When user clicks on a date, it will be sent to the backend-->
+                document.getElementById("date").addEventListener("change", async function() {
+                    const date = document.getElementById("date").value;
+
+                    <!--Making a post request to send selected date to /data-->
+                    const request = await fetch("/data", {
+                        method: "POST",
+                        body: JSON.stringify({user_date: date}),
+                        headers: {"Content-Type": "application/json"}
+                    });
+                    if (request.ok) {
+                        console.log("User selected date sent to /data successfully.")
+                    }
+                })
+            </script>
+        </td>
+    </tr>
+    <tr>
+        <td rowspan="3"> <!--Nested table-->
+            <table>
+                <tr>
+                    <td colspan="2" rowspan="1" class="nested">
+                        <img src="../static/rain.png" width="50" height="50">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="nested">{{ g.data["low"] }}</td>
+                    <td class="nested">{{ g.data["high"] }}</td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td class="field">Wind (km/h):</td>
+        <td> <!--Nested table-->
+            <table>
+                <tr>
+                    <td class="nested">{{ g.data["windLow"] }}</td>
+                    <td class="nested">{{ g.data["windHigh"] }}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td class="field">Humidity (%):</td>
+        <td align="center">{{ g.data["humidity"] }}</td>
+    </tr>
+</table>
+
+</body>
+</html>

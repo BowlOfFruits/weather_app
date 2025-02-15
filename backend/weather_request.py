@@ -15,3 +15,4 @@ def weather_request(user_date: datetime, r: redis):
 
     if missing_dates:
         add_weather(user_date - timedelta(days=1), missing_dates, r, historical=False) # Add missing dates into redis
+

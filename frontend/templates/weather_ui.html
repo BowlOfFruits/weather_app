@@ -10,19 +10,18 @@
 <table class="table_center">
     <tr>
         <td colspan="3" class="date">
-            <script>
-                /*
+                <!--
                     .getMonth() is indexed 0 to 11 so, need to add 1.
                     Both .getMonth() and .getDate() returns 1 digit for numbers < 10, i.e. 2000-9-8.
                     So, use .padStart(2, "0") for both of them to make it double digits, i.e. 2000-09-08
-                 */
-                document.write(`${(new Date()).getFullYear()}-${((new Date()).getMonth() + 1).toString().padStart(2, "0")}-${(new Date()).getDate().toString().padStart(2, "0")}`)
-            </script>
+                 -->
+            <p id="display_date"></p>
             <button type="button" id="calendar">
                 <i class="fa-regular fa-calendar"></i>
             </button>
             <input type="date" id="date"/>
         </td>
+
     </tr>
     <tr id="result_temp"></tr>
     <tr id="result_wind"></tr>
@@ -31,7 +30,8 @@
 <!-- JS for the calendar button -->
 <script>
     // Display today's weather when webpage first loads
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() { // DOMContentLoaded event fires immediately after the html document has been parsed
+
         fetchWeather(true);
     });
 
@@ -45,11 +45,14 @@
 
     // When user clicks on a date, it will be sent to the backend
     async function fetchWeather(isStartup) {
-        let date = document.getElementById("date").value;
+        let date; // initialise date variable
         if (isStartup) {
             const today = new Date()
             date = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}` // padStart(2, "0") adds a 0 to the front of the string
+        } else {
+            date = document.getElementById("date").value;
         }
+        document.getElementById("display_date").innerText = date // sets date based on user's selection
 
         // Making a post request to send selected date to /data
         const request = await fetch(`/data?date=${date}`)
@@ -64,12 +67,24 @@
                 }
             })
             .then(data => {
+                // Selects the appropriate weather icon based on description of weather
+                let weatherIcon;
+                if (data.weather.toLowerCase().includes("sun")) {
+                    weatherIcon = "../static/sun.png"
+                } else if (data.weather.toLowerCase().includes("shower") || data.weather.toLowerCase().includes("rain")) {
+                    weatherIcon = "../static/rain.png"
+                } else if (data.weather.toLowerCase().includes("wind")) {
+                    weatherIcon = "../static/windy.png"
+                } else if (data.weather.toLowerCase().includes("cloudy")) {
+                    weatherIcon = "../static/cloud.png"
+                }
+
                 document.getElementById("result_temp").innerHTML = `
                     <td rowspan="3"> <!--Nested table-->
                         <table>
                             <tr>
                                 <td colspan="2" rowspan="1" class="nested">
-                                    <img src="../static/rain.png" width="50" height="50">
+                                    <img src="${weatherIcon}" width="50" height="50">
                                 </td>
                             </tr>
                             <tr>

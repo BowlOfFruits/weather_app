@@ -57,3 +57,7 @@ td {
 #date {
     display: none;
 }
+
+#display_date {
+    display: inline;
+}

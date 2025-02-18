@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from dateutil.relativedelta import *
+
 import pandas as pd
 import redis
 from flask import Flask, render_template, request
@@ -40,17 +42,23 @@ def get_data():
 
 @app.route("/aggregate", methods=["GET"])
 def get_aggregate_data():
-    from_date = datetime.strptime(request.args.get("from_date"), "%Y-%m-%d")
-    to_date = datetime.strptime(request.args.get("to_date"), "%Y-%m-%d")
     method = request.args.get("method")
-    if from_date >= to_date:
-        return Exception("Error: Dates must be at least one day apart and to_date must come after from_date")
+    from_date, to_date = None, None # initialise
+    if method == "daily": # Allow users to view the 2 weeks trend, starting from from_date
+        from_date = datetime.strptime(request.args.get("from_date"), "%Y-%m-%d") # Users fill in year, month and day
+        to_date = from_date + relativedelta(weeks=2)
+    elif method == "monthly": # Allow users to view 6 months trend, starting from from_date
+        from_date = datetime.strptime(request.args.get("from_date"), "%Y-%m") # Users only fill in year and month, no day.
+        to_date = from_date + relativedelta(months=6) # timedelta doesn't have a "months" option so using relativedelta instead
+    else: # Allow users to view 3 years trend, starting from from_date
+        from_date = datetime.strptime(request.args.get("from_date"), "%Y")
+        to_date = from_date + relativedelta(years=3)
 
     aggregation_request(from_date, to_date, r) # add weather data into redis
 
     # Put everything into a dataframe for plotting
     date_range = [from_date + timedelta(days=i) for i in range((to_date - from_date).days + 1)]
-    aggregate_count = pd.DataFrame(columns=["date", "type", "measurement"])
+    aggregate_count = pd.DataFrame(columns=["date", "type", "values"])
     for date in date_range:
         payload = r.hgetall(date.strftime("%Y-%m-%d"))
         low = eval(payload.get("temp"))[0]  # values are stored as a string in redis -> "['20', '30']". So convert to a list using eval()
@@ -69,17 +77,53 @@ def get_aggregate_data():
             [date, "windHigh", windHigh]
         ], columns=["date", "type", "measurement"])
 
-        pd.concat([aggregate_count, curr_weather])
+        aggregate_count = pd.concat([aggregate_count, curr_weather])
 
+    '''
+    Return as a list of values for each type, so we can use js graphing libraries e.g. Plotly.js in our html file 
+    Do not use matplotlib / seaborn in the backend, as we can only save an image and display that on our website,
+    resulting in non-interactive graphs.
+    '''
+    filter_low = aggregate_count["type"] == "low"
+    filter_high = aggregate_count["type"] == "high"
+    filter_humidityLow = aggregate_count["type"] == "humidityLow"
+    filter_humidityHigh = aggregate_count["type"] == "humidityHigh"
+    filter_windLow = aggregate_count["type"] == "windLow"
+    filter_windHigh = aggregate_count["type"] == "windHigh"
     if method == "daily":
-        # plot graph
-        pass
+        return {"date": aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m-%d")).tolist(),
+                "low": aggregate_count[filter_low]["values"].tolist(),
+                "high": aggregate_count[filter_high]["values"].tolist(),
+                "humidityLow": aggregate_count[filter_humidityLow]["values"].tolist(),
+                "humidityHigh": aggregate_count[filter_humidityHigh]["values"].tolist(),
+                "windLow": aggregate_count[filter_windLow]["values"].tolist(),
+                "windHigh": aggregate_count[filter_windHigh]["values"].tolist()
+                }
+
     elif method == "monthly":
-        # groupby date and type then aggregate using avg and plot
-        pass
+        aggregate_count["year_month"] = aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m"))
+        grouped = aggregate_count.groupby(["year_month", "type"]).mean().reset_index()
+
+        return {"date": grouped["year_month"], # year_month already converted to string, so no need to convert anymore
+                "low": grouped[filter_low]["values"].tolist(),
+                "high": grouped[filter_high]["values"].tolist(),
+                "humidityLow": grouped[filter_humidityLow]["values"].tolist(),
+                "humidityHigh": grouped[filter_humidityHigh]["values"].tolist(),
+                "windLow": grouped[filter_windLow]["values"].tolist(),
+                "windHigh": grouped[filter_windHigh]["values"].tolist()
+                }
     else: # yearly
-        # groupby date and type then aggregate using avg and plot
-        pass
+        aggregate_count["year"] = aggregate_count["date"].dt.year
+        grouped = aggregate_count.groupby(["year", "type"]).mean().reset_index()
+
+        return {"date": grouped["year"],
+                "low": grouped[filter_low]["values"].tolist(),
+                "high": grouped[filter_high]["values"].tolist(),
+                "humidityLow": grouped[filter_humidityLow]["values"].tolist(),
+                "humidityHigh": grouped[filter_humidityHigh]["values"].tolist(),
+                "windLow": grouped[filter_windLow]["values"].tolist(),
+                "windHigh": grouped[filter_windHigh]["values"].tolist()
+                }
 
 
 @app.route("/")

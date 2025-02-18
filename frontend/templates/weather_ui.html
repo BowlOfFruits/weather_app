@@ -10,11 +10,6 @@
 <table class="table_center">
     <tr>
         <td colspan="3" class="date">
-                <!--
-                    .getMonth() is indexed 0 to 11 so, need to add 1.
-                    Both .getMonth() and .getDate() returns 1 digit for numbers < 10, i.e. 2000-9-8.
-                    So, use .padStart(2, "0") for both of them to make it double digits, i.e. 2000-09-08
-                 -->
             <p id="display_date"></p>
             <button type="button" id="calendar">
                 <i class="fa-regular fa-calendar"></i>
@@ -48,7 +43,12 @@
         let date; // initialise date variable
         if (isStartup) {
             const today = new Date()
-            date = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}` // padStart(2, "0") adds a 0 to the front of the string
+            /**
+             .getMonth() is indexed 0 to 11 so, need to add 1.
+             Both .getMonth() and .getDate() returns 1 digit for numbers < 10, i.e. 2000-9-8.
+             So, use .padStart(2, "0") for both of them to make it double digits, i.e. 2000-09-08
+             */
+            date = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`
         } else {
             date = document.getElementById("date").value;
         }

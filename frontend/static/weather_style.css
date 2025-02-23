@@ -79,11 +79,15 @@ td {
 .dropdown .dropbtn {
   font-size: 16px;
   border: none;
-  outline: none;
   color: black;
+  outline: none;
   padding: 14px 16px;
   background-color: inherit;
   font-family: inherit;
+}
+
+.dropdown:hover{
+    background-color: #f8e2c6;
 }
 
 /* For dropdown contents */
@@ -92,7 +96,7 @@ td {
     display: block;
 }
 
-.dropdown-content a:hover {
+.dropdown-content div:hover {
     background-color: #ddd;
 }
 
@@ -104,7 +108,7 @@ td {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 }
 
-.dropdown-content a {
+.dropdown-content div {
     float: none;
     color: black;
     padding: 12px 16px;

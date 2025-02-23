@@ -58,20 +58,12 @@ def get_aggregate_data():
     aggregate_count = pd.DataFrame(columns=["date", "type", "values"])
     for date in date_range:
         payload = r.hgetall(date.strftime("%Y-%m-%d"))
-        low = eval(payload.get("temp"))[0]  # values are stored as a string in redis -> "['20', '30']". So convert to a list using eval()
+        low = eval(payload.get("temp"))[0] # values are stored as a string in redis -> "['20', '30']". So convert to a list using eval()
         high = eval(payload.get("temp"))[1]
-        humidityLow = eval(payload.get("humidity"))[0]
-        humidityHigh = eval(payload.get("humidity"))[1]
-        windLow = eval(payload.get("windSpeed"))[0]
-        windHigh = eval(payload.get("windSpeed"))[1]
 
         curr_weather = pd.DataFrame([
             [date, "low", low],
-            [date, "high", high],
-            [date, "humidityLow", humidityLow],
-            [date, "humidityHigh", humidityHigh],
-            [date, "windLow", windLow],
-            [date, "windHigh", windHigh]
+            [date, "high", high]
         ], columns=["date", "type", "measurement"])
 
         aggregate_count = pd.concat([aggregate_count, curr_weather])
@@ -83,18 +75,10 @@ def get_aggregate_data():
         '''
     filter_low = aggregate_count["type"] == "low"
     filter_high = aggregate_count["type"] == "high"
-    filter_humidityLow = aggregate_count["type"] == "humidityLow"
-    filter_humidityHigh = aggregate_count["type"] == "humidityHigh"
-    filter_windLow = aggregate_count["type"] == "windLow"
-    filter_windHigh = aggregate_count["type"] == "windHigh"
     if method == "daily":
         return {"date": aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m-%d")).tolist(),
                 "low": aggregate_count[filter_low]["values"].tolist(),
-                "high": aggregate_count[filter_high]["values"].tolist(),
-                "humidityLow": aggregate_count[filter_humidityLow]["values"].tolist(),
-                "humidityHigh": aggregate_count[filter_humidityHigh]["values"].tolist(),
-                "windLow": aggregate_count[filter_windLow]["values"].tolist(),
-                "windHigh": aggregate_count[filter_windHigh]["values"].tolist()
+                "high": aggregate_count[filter_high]["values"].tolist()
                 }
 
     elif method == "monthly":
@@ -103,11 +87,7 @@ def get_aggregate_data():
 
         return {"date": grouped["year_month"], # year_month already converted to string, so no need to convert anymore
                 "low": grouped[filter_low]["values"].tolist(),
-                "high": grouped[filter_high]["values"].tolist(),
-                "humidityLow": grouped[filter_humidityLow]["values"].tolist(),
-                "humidityHigh": grouped[filter_humidityHigh]["values"].tolist(),
-                "windLow": grouped[filter_windLow]["values"].tolist(),
-                "windHigh": grouped[filter_windHigh]["values"].tolist()
+                "high": grouped[filter_high]["values"].tolist()
                 }
     else: # yearly
         aggregate_count["year"] = aggregate_count["date"].dt.year
@@ -115,11 +95,7 @@ def get_aggregate_data():
 
         return {"date": grouped["year"],
                 "low": grouped[filter_low]["values"].tolist(),
-                "high": grouped[filter_high]["values"].tolist(),
-                "humidityLow": grouped[filter_humidityLow]["values"].tolist(),
-                "humidityHigh": grouped[filter_humidityHigh]["values"].tolist(),
-                "windLow": grouped[filter_windLow]["values"].tolist(),
-                "windHigh": grouped[filter_windHigh]["values"].tolist()
+                "high": grouped[filter_high]["values"].tolist()
                 }
 
 

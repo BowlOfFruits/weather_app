@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
-from utils import add_weather, add_one_day_weather
+from datetime import timedelta, date
+from utils import add_weather
 import redis
 
 '''
 View weather forecast for 4 days, including today
 '''
-def weather_request(user_date: datetime, r: redis) -> None:
+def weather_request(user_date: date, r: redis) -> None:
     '''
     Add weather data into redis
     '''
@@ -17,13 +17,17 @@ def weather_request(user_date: datetime, r: redis) -> None:
             missing_dates.append((i, date_str))
 
     if missing_dates:
-        add_weather(user_date - timedelta(days=1), missing_dates, r, historical=False) # Add missing dates into redis
+        add_weather(user_date - timedelta(days=1), missing_dates, r) # Add missing dates into redis
 
-def aggregation_request(from_date: datetime, to_date: datetime, r: redis) -> None:
+def aggregation_request(from_date: date, to_date: date, r: redis) -> None:
     '''
     Add weather data into redis
     '''
     date_range = [from_date + timedelta(days=i) for i in range((to_date-from_date).days + 1)]
-    for i in range(len(date_range)):
-        if not r.exists(date_range[i].strftime("%Y-%m-%d")): # weather data for this date doesn't exist
-            add_one_day_weather(date_range[i] - timedelta(days=1), r)
+    for i in range(0, len(date_range), 4): # API returns 4 day outlook so look at 4 dates at a time
+        missing_dates = []
+        for j in range(4):
+            if not r.exists(date_range[i+j].strftime("%Y-%m-%d")): # weather data for this date doesn't exist
+                missing_dates.append((i+j, date_range[i+j].strftime("%Y-%m")))
+
+        add_weather(date_range[i] - timedelta(days=1), missing_dates, r)

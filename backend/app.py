@@ -22,8 +22,6 @@ limiter = Limiter(
 #@limiter.limit("10 per day")
 def get_data():
     user_date = datetime.strptime(request.args.get("date"), "%Y-%m-%d")
-    if user_date <= datetime.now().date():
-        return Exception("Error: Please choose a valid date. Date must be before or on today.")
 
     weather_request(user_date, r) # Check if redis contains this date. If not, add it in
 
@@ -40,24 +38,23 @@ def get_data():
 
     return {"weather": weather, "low": low, "high": high, "humidityLow": humidityLow, "humidityHigh": humidityHigh, "windLow": windLow, "windHigh": windHigh, "windDirection": windDirection}
 
+
 @app.route("/aggregate", methods=["GET"])
 def get_aggregate_data():
+    date_today = datetime.now().date()
+    start_date = None
     method = request.args.get("method")
-    from_date, to_date = None, None # initialise
-    if method == "daily": # Allow users to view the 2 weeks trend, starting from from_date
-        from_date = datetime.strptime(request.args.get("from_date"), "%Y-%m-%d") # Users fill in year, month and day
-        to_date = from_date + relativedelta(weeks=2)
-    elif method == "monthly": # Allow users to view 6 months trend, starting from from_date
-        from_date = datetime.strptime(request.args.get("from_date"), "%Y-%m") # Users only fill in year and month, no day.
-        to_date = from_date + relativedelta(months=6) # timedelta doesn't have a "months" option so using relativedelta instead
-    else: # Allow users to view 3 years trend, starting from from_date
-        from_date = datetime.strptime(request.args.get("from_date"), "%Y")
-        to_date = from_date + relativedelta(years=3)
+    if method == "daily": # Allow users to view the past 2 weeks trend
+        start_date = date_today - relativedelta(weeks=2)
+    elif method == "monthly": # Allow users to view past 6 months trend
+        start_date = date_today - relativedelta(months=6)
+    else: # Allow users to view past 3 years trend
+        start_date = date_today - relativedelta(years=3)
 
-    aggregation_request(from_date, to_date, r) # add weather data into redis
+    aggregation_request(start_date, date_today, r) # add weather data into redis
 
     # Put everything into a dataframe for plotting
-    date_range = [from_date + timedelta(days=i) for i in range((to_date - from_date).days + 1)]
+    date_range = [start_date + timedelta(days=i) for i in range((date_today - start_date).days + 1)]
     aggregate_count = pd.DataFrame(columns=["date", "type", "values"])
     for date in date_range:
         payload = r.hgetall(date.strftime("%Y-%m-%d"))
@@ -79,11 +76,11 @@ def get_aggregate_data():
 
         aggregate_count = pd.concat([aggregate_count, curr_weather])
 
-    '''
-    Return as a list of values for each type, so we can use js graphing libraries e.g. Plotly.js in our html file 
-    Do not use matplotlib / seaborn in the backend, as we can only save an image and display that on our website,
-    resulting in non-interactive graphs.
-    '''
+        '''
+        Return as a list of values for each type, so we can use js graphing libraries e.g. Plotly.js in our html file
+        Do not use matplotlib / seaborn in the backend, as we can only save an image and display that on our website,
+        resulting in non-interactive graphs.
+        '''
     filter_low = aggregate_count["type"] == "low"
     filter_high = aggregate_count["type"] == "high"
     filter_humidityLow = aggregate_count["type"] == "humidityLow"

@@ -59,9 +59,11 @@
             .then(response => {
                 console.log(response) // debug purposes
                 if (!response.ok) {
-                    document.getElementById("result_temp").innerHTML = `Error code ${response.status}`
-                    document.getElementById("result_wind").innerHTML = `<p>Please select a date before or on ${(new Date()).getFullYear()}-${((new Date()).getMonth() + 1).toString().padStart(2, "0")}-${(new Date()).getDate().toString().padStart(2, "0")}<p>`
-                    document.getElementById("result_humidity").innerHTML = ``
+                    if (response.status === 500) {
+                        document.getElementById("result_wind").innerHTML = `<p>Something went wrong with the server.<p>`
+                    } else if (response.status === 400) {
+                        document.getElementById("result_wind").innerHTML = `<p>Please select a date before or on ${(new Date()).getFullYear()}-${((new Date()).getMonth() + 1).toString().padStart(2, "0")}-${(new Date()).getDate().toString().padStart(2, "0")}<p>`
+                    }
                 } else {
                     return response.json() // this output is passed onto the next .then()
                 }
@@ -88,8 +90,8 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="nested">${data.high}</td>
                                 <td class="nested">${data.low}</td>
+                                <td class="nested">${data.high}</td>
                             </tr>
 
                         </table>
@@ -120,6 +122,21 @@
             })
     }
 </script>
+
+<table></table>
+
+<div class="navbar">
+    <div class="dropdown">
+        <button class="dropbtn">Dropdown
+            <i class="fa fa-caret-down"></i>
+        </button>
+        <div class="dropdown-content">
+            <a href="/aggregate/daily">Daily</a>
+            <a href="/aggregate/monthly">Monthly</a>
+            <a href="/aggregate/yearly">Yearly</a>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

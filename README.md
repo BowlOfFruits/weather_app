@@ -28,7 +28,7 @@ Personal project to learn about http requests using Flask, caching with Redis to
 |   |   ├── windypng
 |   |   └── weather_style.css
 │   └── templates
-|   |   └── weather_ui.html
+|       └── weather_ui.html
 ├── Dockerfile
 ├── compose.yaml
 ├── README.md

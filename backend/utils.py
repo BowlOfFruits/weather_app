@@ -41,7 +41,7 @@ def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis) -> 
                     "windDirection": windDirection
                 }
             )
-            if datetime.strptime(date_str, '%Y-%m-%d') > datetime.now().date():
+            if datetime.strptime(date_str, '%Y-%m-%d') > datetime.now():
                 r.expire(date_str, timedelta(hours=6)) # remove forecast after a few hours as we want to get updated forecast
 
     except Exception as e:
@@ -50,5 +50,9 @@ def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis) -> 
         print(e)
 
     else:
-        print("missing dates:", [d for i, d in missing_dates])
-        print("Added into redis successfully")
+        missing_dates = [d for i, d in missing_dates]
+        if missing_dates:
+            print("missing dates:", missing_dates)
+            print("Added into redis successfully")
+        else:
+            print("no missing dates")

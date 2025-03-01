@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.relativedelta import *
 import redis
 import requests
 import json
@@ -12,7 +13,7 @@ forecast = json.loads(json.dumps(response.json()["data"]["records"][0])) # index
 print(forecast["forecasts"])
 '''
 
-for i in range(0, 15, 4):
-    print(i)
+now = datetime.now().date()
+print(now - relativedelta(weeks=2))
 
 

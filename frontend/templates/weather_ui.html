@@ -1,68 +1,12 @@
 <!DOCTYPE html>
 <html>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <head>
     <link rel="stylesheet" href="../static/weather_style.css">
     <script src="https://kit.fontawesome.com/71ab039138.js" crossorigin="anonymous"></script>
     <title>Weather Dashboard</title>
 </head>
 <body>
-
-<div class="navbar">
-    <div class="dropdown">
-        <button class="dropbtn", id="home">
-            <i class="fa-solid fa-house"></i>
-        </button>
-    </div>
-    <div class="dropdown">
-        <button class="dropbtn">
-            <i class="fa-solid fa-chart-simple"></i>
-            <i class="fa fa-caret-down"></i>
-        </button>
-        <div class="dropdown-content">
-            <div id="daily">Daily</div>
-            <div id="monthly">Monthly</div>
-            <div id="yearly">Yearly</div>
-        </div>
-    </div>
-</div>
-<table></table>
-
-<script>
-    document.getElementById("home").addEventListener("click", function() {
-        fetchWeather(true)
-    })
-
-    document.getElementById("daily").addEventListener("click", function() {
-
-    })
-
-    async function getTrend(method) {
-        const request = await fetch(`./aggregate/${method}`)
-            .then(response => {
-                console.log(response)
-                if (!response.ok) {
-                    if (response.status === 500) {
-                        document.getElementById("result_wind").innerHTML = `<p>Something went wrong with the server.<p>`
-                    } else if (response.status === 400) {
-                        document.getElementById("result_wind").innerHTML = `<p>Please select a date before or on ${(new Date()).getFullYear()}-${((new Date()).getMonth() + 1).toString().padStart(2, "0")}-${(new Date()).getDate().toString().padStart(2, "0")}<p>`
-                    }
-                } else {
-                    return response.json() // this output is passed onto the next .then()
-                }
-            })
-            .then(data => {
-                document.getElementById("trend").innerHTML = `
-
-                `
-            })
-    }
-</script>
-
-<script>
-    document.getElementById("home").addEventListener("click", function() {
-        fetchWeather(true)
-    })
-</script>
 
 <table class="table_center">
     <tr>
@@ -79,6 +23,7 @@
     <tr id="result_wind"></tr>
     <tr id="result_humidity"></tr>
 </table>
+
 <!-- JS for the calendar button -->
 <script>
     // Display today's weather when webpage first loads
@@ -179,9 +124,111 @@
     }
 </script>
 
-<div id="trend">
-
+<div id="navbar">
+    <button id="dropbtn">
+        <i class="fa-solid fa-chart-simple"></i>
+        <i class="fa fa-caret-down"></i>
+    </button>
+    <p id="selected-option">Daily</p> <!--Set default to daily-->
+    <div id="dropdown-content">
+        <div class="dropdown-item">Daily</div>
+        <div class="dropdown-item">Monthly</div>
+        <div class="dropdown-item">Yearly</div>
+    </div>
 </div>
+
+<!-- Loading Bar -->
+<div id="loading-container">
+    <i class="fa fa-spinner" id="loading-icon"></i>
+    <span id="loading-text">Loading</span>
+</div>
+
+<!-- Graph -->
+<div id="graph-container">
+    <div id="graph"></div>
+</div>
+
+<script>
+    document.getElementById("dropbtn").addEventListener("mouseenter", function() {
+        document.getElementById("dropdown-content").style.display = "block"
+    }) // Show the dropdown when mouse hovers over navbar.
+
+    document.querySelectorAll(".dropdown-item").forEach(item => {
+        item.addEventListener("click", function() {
+            document.getElementById("selected-option").innerText = item.innerHTML // Display the selected option beside the logo
+            document.getElementById("dropdown-content").style.display = "none" // make the dropdown disappear once mouse shift away from navbar
+
+            const selectedMethod = item.innerHTML // plot the graph depending on which dropdown item was chosen
+            getGraph(selectedMethod)
+        })
+    })
+
+    document.getElementById("navbar").addEventListener("mouseleave", function() {
+        document.getElementById("dropdown-content").style.display = "none"
+    }) // Remove the dropdown when mouse hovers over navbar.
+
+    document.addEventListener("DOMContentLoaded", function() { // Load in the daily graph by default
+        getGraph("Daily")
+    });
+
+    // For the graph function
+    async function getGraph(selectedMethod) {
+        document.getElementById("graph").style.display = "none" // Remove the current graph when another option is selected
+
+        // Spinning logo
+        const loadingContainer = document.getElementById("loading-container");
+        loadingContainer.style.display = "block"; // Show loading spinner
+
+        // Animate the dots that appear after "Loading"
+        let dots = 0
+        const dotsInterval = setInterval(() => {
+            dots = (dots + 1) % 4
+            document.getElementById("loading-text").innerText = "Loading" + ".".repeat(dots)
+        }, 300)
+
+        // Send request for flask to catch
+        const method = selectedMethod
+        const request = await fetch(`/aggregate?method=${selectedMethod}`)
+            .then(response => {
+                console.log(response)
+                if (response.status === 500) {
+                        document.getElementById("graph").innerHTML = `<p>Something went wrong with the server.<p>`
+                    } else if (response.status === 400) {
+                        document.getElementById("graph").innerHTML = `<p>Please select a date before or on ${(new Date()).getFullYear()}-${((new Date()).getMonth() + 1).toString().padStart(2, "0")}-${(new Date()).getDate().toString().padStart(2, "0")}<p>`
+                } else {
+                    return response.json() // this output is passed onto the next .then()
+                }
+            }).then(data => {
+                // Stop the dots and remove the spinning icon
+                clearInterval(dotsInterval);
+                loadingContainer.style.display = "none";
+
+                // Get the values to plot
+                console.log(data)
+                const values = [
+                    {x: data.date, y: data.low, mode: "scatter", name: "low"},
+                    {x: data.date, y: data.high, mode: "scatter", name: "high"}
+                ]
+                // Define Layout
+                const layout = {
+                    title: `${method} temperature trend`,
+                    paper_bgcolor: "rgba(0,0,0,0", // Transparency
+                    plot_bgcolor: "rgba(0,0,0,0)", // Transparency
+                    yaxis: {
+                        range: [20, 40],
+                        type: 'linear'
+                    },
+                    legend: {
+                        x: 0.95,
+                        y: 1
+                    }
+                }
+
+                Plotly.newPlot("graph", values, layout)
+                document.getElementById("graph").style.display = "block" // Display the graph
+            })
+    }
+</script>
 
 </body>
 </html>

@@ -2,11 +2,9 @@ body {
     background-color: azure;
 }
 
+/* Table styling */
 table {
-    background-color: white;
-    border-style: solid;
-    border-color: white;
-    border-radius: 15px;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 
@@ -18,6 +16,8 @@ td {
 .table_center {
     margin-left: auto;
     margin-right: auto;
+    border: solid 3px antiquewhite;
+    border-radius: 10px;
 }
 
 .date {
@@ -39,8 +39,9 @@ td {
     text-align: center;
 }
 
+/* Calendar styling */
 #calendar {
-    background-color: white;
+    background-color: rgba(0, 0, 0, 0);
     border: none;
     padding: 5px 5px;
     font-size: 15px;
@@ -64,55 +65,114 @@ td {
 }
 
 /* Navigation bar */
-.navbar {
+#navbar {
+    width: 21%;
     overflow: hidden;
-    background-color: antiquewhite;
+    background-color: rgba(0, 0, 0, 0);
+    border: solid 3px antiquewhite;
     border-radius: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 3%;
 }
 
 /* Dropdown button */
-.dropdown {
-  float: left;
-  overflow: hidden;
+#button_content {
+    display: inline;
 }
 
-.dropdown .dropbtn {
-  font-size: 16px;
-  border: none;
-  color: black;
-  outline: none;
-  padding: 14px 16px;
-  background-color: inherit;
-  font-family: inherit;
+#dropbtn {
+    font-size: 16px;
+    border: none;
+    color: black;
+    outline: none;
+    padding: 14px 16px;
+    background-color: inherit;
+    font-family: inherit;
 }
 
-.dropdown:hover{
+#dropbtn:hover{
     background-color: #f8e2c6;
 }
 
 /* For dropdown contents */
-.dropdown:hover .dropdown-content {
+#dropdown:hover #dropdown-content {
     border-radius: 10px;
     display: block;
 }
 
-.dropdown-content div:hover {
-    background-color: #ddd;
-}
-
-.dropdown-content {
+#dropdown-content {
     display: none;
     position: absolute;
     background-color: #f9f9f9;
     min-width: 110px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border-radius: 10px
 }
 
-.dropdown-content div {
+#dropdown-content div {
     float: none;
     color: black;
     padding: 12px 16px;
     text-decoration: none;
     display: block;
     text-align: left;
+}
+
+#dropdown-content div:hover {
+    background-color: #ddd;
+}
+
+#selected-option {
+    display: inline;
+}
+
+/* Loading bar */
+#loading-container {
+    display: none; /* Initially hidden */
+    margin: 100px auto;
+    text-align: center;
+}
+
+#loading-icon {
+    font-size: 24px;
+    color: darkblue;
+    animation: spin 1s linear infinite; /* Spinning effect */
+    margin-right: 10px;
+    z-index: -1;
+    position: relative;
+}
+
+/* Keyframes for spinner animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#loading-text {
+    font-size: 16px;
+    display: inline;
+    color: darkblue;
+    text-align: center;
+    position: relative;
+}
+
+/* Bring plotly graph to the back and centers it */
+#graph-container {
+    z-index: -1; /* Elements with high z-index will be in front of elements with low z-index */
+    position: absolute; /* z-index requires setting position to work */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+#graph {
+    margin: 5px auto;
+    border: solid 3px antiquewhite;
+    border-radius: 10px;
 }

@@ -44,9 +44,10 @@ def get_aggregate_data():
     date_today = datetime.now().date()
     start_date = None
     method = request.args.get("method")
-    if method == "daily": # Allow users to view the past 2 weeks trend
+    print(method)
+    if method == "Daily": # Allow users to view the past 2 weeks trend
         start_date = date_today - relativedelta(weeks=2)
-    elif method == "monthly": # Allow users to view past 6 months trend
+    elif method == "Monthly": # Allow users to view past 6 months trend
         start_date = date_today - relativedelta(months=6)
     else: # Allow users to view past 3 years trend
         start_date = date_today - relativedelta(years=3)
@@ -64,36 +65,40 @@ def get_aggregate_data():
         curr_weather = pd.DataFrame([
             [date, "low", low],
             [date, "high", high]
-        ], columns=["date", "type", "measurement"])
+        ], columns=["date", "type", "values"])
 
         aggregate_count = pd.concat([aggregate_count, curr_weather])
 
-        '''
-        Return as a list of values for each type, so we can use js graphing libraries e.g. Plotly.js in our html file
-        Do not use matplotlib / seaborn in the backend, as we can only save an image and display that on our website,
-        resulting in non-interactive graphs.
-        '''
+    aggregate_count["date"] = pd.to_datetime(aggregate_count["date"], format="%Y-%m-%d") # pandas converts date to object, so convert it back to datetime.
+    aggregate_count.reset_index(inplace=True, drop=True)
+
+    '''
+    Return as a list of values for each type, so we can use js graphing libraries e.g. Plotly.js in our html file
+    Do not use matplotlib / seaborn in the backend, as we can only save an image and display that on our website,
+    resulting in non-interactive graphs.
+    '''
     filter_low = aggregate_count["type"] == "low"
     filter_high = aggregate_count["type"] == "high"
-    if method == "daily":
-        return {"date": aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m-%d")).tolist(),
+    if method == "Daily":
+        # Have to make date unique, as we have 2 same dates, one for low one for high.
+        # e.g. [ ["2024-05-10", "low", 25], ["2024-05-10", "high", 30] ]
+        return {"date": aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m-%d")).unique().tolist(),
                 "low": aggregate_count[filter_low]["values"].tolist(),
                 "high": aggregate_count[filter_high]["values"].tolist()
                 }
-
-    elif method == "monthly":
+    elif method == "Monthly":
         aggregate_count["year_month"] = aggregate_count["date"].apply(lambda x: x.strftime("%Y-%m"))
         grouped = aggregate_count.groupby(["year_month", "type"]).mean().reset_index()
 
-        return {"date": grouped["year_month"], # year_month already converted to string, so no need to convert anymore
+        return {"date": grouped["year_month"].unique().tolist(), # year_month already converted to string, so no need to convert anymore
                 "low": grouped[filter_low]["values"].tolist(),
                 "high": grouped[filter_high]["values"].tolist()
                 }
-    else: # yearly
+    else: # Yearly
         aggregate_count["year"] = aggregate_count["date"].dt.year
         grouped = aggregate_count.groupby(["year", "type"]).mean().reset_index()
 
-        return {"date": grouped["year"],
+        return {"date": grouped["year"].unique().tolist(),
                 "low": grouped[filter_low]["values"].tolist(),
                 "high": grouped[filter_high]["values"].tolist()
                 }

@@ -1,0 +1,5 @@
+pandas
+redis
+python-dateutil
+Flask
+requests

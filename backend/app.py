@@ -4,22 +4,15 @@ from dateutil.relativedelta import *
 import pandas as pd
 import redis
 from flask import Flask, render_template, request
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 from weather_request import weather_request, aggregation_request
 
-r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+# host argument must be the same as the name given in compost.yaml
+r = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
 
 app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/static")
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    storage_uri="memory://"
-)
 
 @app.route("/data", methods=["GET"])
-#@limiter.limit("10 per day")
 def get_data():
     user_date = datetime.strptime(request.args.get("date"), "%Y-%m-%d")
 

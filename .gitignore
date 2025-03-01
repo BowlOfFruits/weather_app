@@ -170,3 +170,5 @@ backend/.idea/
 
 # PyPI configuration file
 .pypirc
+
+.dockerignore

@@ -1,0 +1,21 @@
+# Example code for using flask and redis -> https://github.com/docker/awesome-compose/tree/master/flask-redis
+
+services:
+  app:
+    build: . # location of dockerfile to build our app
+    volumes:
+      - .:/app # Working dir of the app, allows us to see changes in our code without redoing docker compose up
+    ports:
+      - 5000:5000 # maps port 5000 in local container to port 5000 in desktop so we can access the website from our desktop
+    depends_on:
+      - redis
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/var/lib/redis/data
+    ports:
+      - 6379:6379
+
+volumes:
+  redis_data:
+    driver: local

@@ -1,14 +1,14 @@
 import sys, os
 import requests
 import json
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 import redis
 
-def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis, historical: bool) -> None:
+def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis) -> None:
     '''
     API provided by data.gov.sg
     Calls API and adds forecast for dates that are not in redis into redis.
-    Sets expiry to one day later
+    Sets expiry to 6 hours later
     '''
 
     url = "https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook?date=" + start_date.strftime("%Y-%m-%d") # Get the 4-day forecast from the specified day
@@ -41,7 +41,7 @@ def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis, his
                     "windDirection": windDirection
                 }
             )
-            if not historical:
+            if datetime.strptime(date_str, '%Y-%m-%d') > datetime.now():
                 r.expire(date_str, timedelta(hours=6)) # remove forecast after a few hours as we want to get updated forecast
 
     except Exception as e:
@@ -50,10 +50,9 @@ def add_weather(start_date: date, missing_dates: list[(int, str)], r: redis, his
         print(e)
 
     else:
-        if historical:
-            print("missing historical dates:", missing_dates)
+        missing_dates = [d for i, d in missing_dates]
+        if missing_dates:
+            print("missing dates:", missing_dates)
+            print("Added into redis successfully")
         else:
-            print("missing forecast dates:", [date for i, date in missing_dates])
-
-        print("Added into redis successfully")
-
+            print("no missing dates")

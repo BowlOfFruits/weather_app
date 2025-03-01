@@ -7,7 +7,7 @@ Personal project to learn about http requests using Flask, caching with Redis to
 ## Starting the app
 1. git clone this repo: ```git@github.com:BowlOfFruits/weather_app.git```
 2. Make sure docker is installed. If not, refer to this link https://www.docker.com/get-started/
-3. Open your console, navigate into the weather_app folder and type in the following command: ```docker compose up```
+3. Open your console, navigate into weather_app folder and type in the following command: ```docker compose up```
 4. Wait for things to install
 5. Go into your browser and enter ```localhost:5000```
 6. Enjoy!
